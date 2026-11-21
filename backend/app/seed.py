@@ -91,5 +91,8 @@ SEED_ROWS: dict[str, list[dict[str, Any]]] = {
     "owner_mgr": [{'id': 1, 'status': '待确认', 'pending': True, 'abnormal': False,
   '指派编号': 'OWNE-0001', '目标资产': '核心交易表', '负责角色': '数据负责人',
   '责任人': '张三', '备份人': '李四', '生效日期': '2026-09-01',
-  '交接记录': '-', '最后确认': '-'}]
+  '交接记录': '-', '最后确认': '-'}],
+    "field_catalog": [],
+    "contract_grant": [],
+    "delivery_note": [],
 }

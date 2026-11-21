@@ -93,3 +93,44 @@ class OwnerMgrService(BaseModuleService):
     def get_owners_by_person(self, person: str) -> list[dict[str, Any]]:
         """获取某人负责的所有资产。"""
         return store.find_by_field(self.MODULE, "责任人", person)
+
+    def verify_asset_assignment(self, asset_code: str) -> dict[str, Any]:
+        """契约签署/交付时核验资产是否存在生效中的负责人指派。
+
+        核验结果供数据契约签署与交付清单回写复用：
+        - 已存在生效（或交接中）指派：核验通过，返回当前责任人；
+        - 无任何指派或全部过期：核验未过，要求先完成资产指派。
+        """
+        assignments = self.get_owners_by_asset(asset_code)
+        active = [
+            row for row in assignments
+            if row.get("status") in ("已生效", "交接中") and row.get("责任人")
+        ]
+        if active:
+            current = sorted(active, key=lambda row: int(row.get("id", 0)))[-1]
+            return {
+                "passed": True,
+                "asset_code": asset_code,
+                "owner": current.get("责任人", ""),
+                "assignment_id": current.get("id"),
+                "指派编号": current.get("指派编号", ""),
+                "detail": f"资产{asset_code}存在生效指派{current.get('指派编号', '')}，"
+                          f"负责人{current.get('责任人', '')}",
+            }
+        if assignments:
+            return {
+                "passed": False,
+                "asset_code": asset_code,
+                "owner": "",
+                "assignment_id": None,
+                "指派编号": "",
+                "detail": f"资产{asset_code}的负责人指派均已过期，需重新指派",
+            }
+        return {
+            "passed": False,
+            "asset_code": asset_code,
+            "owner": "",
+            "assignment_id": None,
+            "指派编号": "",
+            "detail": f"资产{asset_code}缺少负责人指派，签署前需先在负责人管理中登记",
+        }
